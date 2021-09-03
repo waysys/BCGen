@@ -1,21 +1,25 @@
 # -------------------------------------------------------------------------------
 #
-#  Copyright (c) 2019 Franklin Mutual Insurance
+#  Copyright (c) 2021 Waysys LLC
 #
 # -------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------
 
 __author__ = 'Bill Shaffer'
-__version__ = "14-Oct-2019"
+__version__ = "2021-09-02"
 
 """
 This module tests the Connector class.
 """
 
-from base.connector import Connector, ConnectorWindows
-from queries.claimcenterqueries import ClaimCenterQuery
 import unittest
+from datetime import datetime
+
 import xmlrunner
+
+from base.connector import ConnectorWindows
+from configuration.configuration import ConnectorTestConfiguration
+from queries.policycenterqueries import PolicyCenterQueries
 
 
 # -------------------------------------------------------------------------------
@@ -27,16 +31,34 @@ class TestConnector(unittest.TestCase):
     """
     Test the ability to connect to the DataHub database.
     """
+
+    # -------------------------------------------------------------------------------
+    #  Class Variables
+    # -------------------------------------------------------------------------------
+
+    configuration = ConnectorTestConfiguration()
+
+    # -------------------------------------------------------------------------------
+    #  Support Methods
+    # -------------------------------------------------------------------------------
+
     def setUp(self):
         """
         Initialize the connector.
         """
-        self.connector = Connector()
-        self.connector.server = "GWDEVDSV10"
-        self.connector.database = "DH_DEV"
-        self.connector.username = "bshaffer"
-        self.connector.password = "DEVgwFMI2019"
+        self.connector = ConnectorWindows()
+        self.connector.dsn = self.configuration.data_source
+        self.connector.database = self.configuration.database
+        self.cnx = self.connector.connect()
         return
+
+    def tearDown(self):
+        self.cnx.close()
+        return
+
+    # -------------------------------------------------------------------------------
+    #  Tests
+    # -------------------------------------------------------------------------------
 
     def test_01_connect_string(self):
         """
@@ -50,30 +72,26 @@ class TestConnector(unittest.TestCase):
         """
         Test that the connector actually connects to the database.
         """
-        cnx = self.connector.connect()
-        cursor = cnx.cursor()
+        cursor = self.cnx.cursor()
         self.assertEqual(-1, cursor.rowcount, "Cursor did not return -1")
         return
 
     def test_03_database_connection_with_odbc_datasource(self):
         """
-        Test connection through ODB data source.
+        Test connection through ODB data source.  Perform a query.
         """
-        self.connector = ConnectorWindows()
-        self.connector.dsn = "QA"
-        self.connector.database = "GWCC"
-        cnx = self.connector.connect()
-        cursor = cnx.cursor()
-        self.assertEqual(-1, cursor.rowcount, "Cursor did not return -1")
-        query = ClaimCenterQuery(cnx)
-        count = query.query_policy_count()
-        self.assertTrue(count > 0, "Policy count was not returned: " + str(count))
+        pc_queries = PolicyCenterQueries(self.cnx)
+        selection_start = datetime(2021, 9, 1)
+        selection_end = datetime(2021, 9, 3)
+        results = pc_queries.query_accounts(selection_start, selection_end)
+        count = len(results)
+        self.assertTrue(count > 0, "Accounts were not found: " + str(count))
         return
 
 
 if __name__ == '__main__':
-    report_file = 'C:/GFITWorkspaces/DH/GLtest.xml'
-    with open(report_file, 'wb') as output:
+    report_file = TestConnector.configuration.report_file
+    with open(report_file, 'w') as output:
         unittest.main(
             testRunner=xmlrunner.XMLTestRunner(output=output),
             failfast=False, buffer=False, catchbreak=False)

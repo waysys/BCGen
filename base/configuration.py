@@ -16,11 +16,11 @@ databases, destination databases, and report locations) for various
 types of tests.
 """
 
-from datetime import datetime
 import os
+from datetime import datetime
 
-from base.environments import fetch_environment_code, has_environment
 from base.dates import process_env_date
+from base.environments import fetch_environment_code, get_environment, has_environment
 from base.testexception import TestException
 
 # -------------------------------------------------------------------------------
@@ -28,8 +28,9 @@ from base.testexception import TestException
 # -------------------------------------------------------------------------------
 
 report_files = {
-
+    "ConnectorTest": "/report_files/connector_test.xml"
 }
+
 
 # -------------------------------------------------------------------------------
 #  Configuration
@@ -40,6 +41,7 @@ class Configuration:
     """
     This class is the parent of the classes that vary by the nature of the test.
     """
+
     # ---------------------------------------------------------------------------
     #  Constructor
     # ---------------------------------------------------------------------------
@@ -51,34 +53,34 @@ class Configuration:
         return
 
     @property
-    def db_source(self):
+    def db_source(self) -> list[str]:
         """
         Return the database information for the source.
         """
         env_name = "ENV_SOURCE"
-        param = self.get_database_info(env_name)
-        return param
+        params = self.get_database_info(env_name)
+        return params
 
     @property
-    def db_dest(self):
+    def db_dest(self) -> list[str]:
         """
         Return the database information for the destination.
         """
         env_name = "ENV_DEST"
-        param = self.get_database_info(env_name)
-        return param
+        params = self.get_database_info(env_name)
+        return params
 
     @property
-    def db_info(self):
+    def db_info(self) -> list[str]:
         """
         Return the database information for InfoCenter
         """
         env_name = "ENV_INFO"
-        param = self.get_database_info(env_name)
-        return param
+        params = self.get_database_info(env_name)
+        return params
 
     @property
-    def reporting_date(self):
+    def reporting_date(self) -> datetime:
         """
         Return the reporting date.
         """
@@ -87,7 +89,7 @@ class Configuration:
         return date
 
     @property
-    def starting_date(self):
+    def starting_date(self) -> datetime:
         """
         Return the starting date for a range of data.
         """
@@ -96,14 +98,14 @@ class Configuration:
         return date
 
     @property
-    def report_file(self):
+    def report_file(self) -> str:
         """
         Return the full path to the test report.
         """
         return self.test_report()
 
     @property
-    def today(self):
+    def today(self) -> datetime:
         """
         Return the current date and time.
         """
@@ -111,9 +113,9 @@ class Configuration:
         return today
 
     @staticmethod
-    def get_database_info(env_variable_name):
+    def get_database_info(env_variable_name) -> list[str]:
         """
-        Retrieve the database environment information based on the environment variable name.
+        Retrieve the data source and database based on the environment variable name.
         Retrieve the environment abbreviation from the system and then retrieve the database information
         from the list of environments.
         """
@@ -121,7 +123,8 @@ class Configuration:
         env_abbreviation = fetch_environment_code(env_variable_name, "Environment Variable Not Specified")
         if not has_environment(env_abbreviation):
             raise TestException("Unknown environment name - " + env_abbreviation)
-        return env_abbreviation
+        params = get_environment(env_abbreviation)
+        return params
 
     def initialize_test_class(self):
         """
@@ -134,7 +137,7 @@ class Configuration:
     # -------------------------------------------------------------------------------
 
     @staticmethod
-    def test_report():
+    def test_report() -> str:
         """
         Return the full path of the test report.
         """
@@ -152,7 +155,7 @@ class Configuration:
     # -------------------------------------------------------------------------------
 
     @staticmethod
-    def fetch_reporting_date():
+    def fetch_reporting_date() -> datetime:
         """
         Return the reporting date from the environmental variable ENV_DATE.
         """

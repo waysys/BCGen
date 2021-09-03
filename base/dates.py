@@ -323,8 +323,8 @@ def process_reporting_date(args):
     return dte
 
 
-def process_env_date(env_date):
-    """Return the specified dte.  If the input is 'current', return the current dte time.
+def process_env_date(env_date) -> datetime:
+    """Return the specified date.  If the input is 'current', return the current date time.
 
     Argument:
         env_date - a string obtained from the ENV_DATE environmental variable.  It should
