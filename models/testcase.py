@@ -1,6 +1,6 @@
 # -------------------------------------------------------------------------------
 #
-#  Copyright (c) 2018 Waysys LLC
+#  Copyright (c) 2021 Waysys LLC
 #
 # -------------------------------------------------------------------------------
 #
@@ -16,7 +16,7 @@
 # -------------------------------------------------------------------------------
 
 __author__ = 'Bill Shaffer'
-__version__ = "31-Dec-2020"
+__version__ = "03-Sep-2021"
 
 
 """
@@ -28,7 +28,8 @@ from xml.etree.ElementTree import Element
 from xml.etree.ElementTree import tostring
 from _datetime import date
 
-from testcasetable import create_test_tables
+from models.spec import TestCaseSpecification, TestTableSpecification
+from models.testcasetable import ColumnTestTable
 
 
 # -------------------------------------------------------------------------------
@@ -48,19 +49,18 @@ class TestCase:
     #  Constructor
     # ---------------------------------------------------------------------------
 
-    def __init__(self, test_case_number: str):
+    def __init__(self, spec: TestCaseSpecification):
         """
         Initialize the class.
 
         Argument:
-            test_case_number
+            spec - the test case specification for this thest case.
         """
         self._html = None
-        self._title = self.product_spec.suite_name
-        self._project = self.product_spec.project
-        self._author = self.product_spec.author
-        self._description = self.product_spec.description
-        self._test_case_number = test_case_number
+        self._author = spec.author
+        self._description = spec.description
+        self._test_case_number = self.test_case_number
+        self._spec = spec
         return
 
     # ---------------------------------------------------------------------------
@@ -68,61 +68,54 @@ class TestCase:
     # ---------------------------------------------------------------------------
 
     @property
-    def title(self):
+    def title(self) -> str:
         """
         This property holds the content that goes into the <title> element in
         the heading.
         """
-        assert self._title is not None, "Title must not be None"
-        return self._title
+        assert self._spec.suite_name is not None, "Title must not be None"
+        return self._spec.suite_name
 
     @property
-    def project(self):
+    def project(self) -> str:
         """
         Return the name of the project.
         """
-        assert self._project is not None, "Project must not be None"
-        return self._project
+        assert self._spec.project_name is not None, "Project must not be None"
+        return self._spec.project_name
 
     @property
-    def author(self):
+    def author(self) -> str:
         """
         Return the author of this test case.
         """
-        assert self._author is not None, "Author must not be None"
-        return self._author
+        assert self._spec.author is not None, "Author must not be None"
+        return self._spec.author
 
     @property
-    def description(self):
+    def description(self) -> str:
         """
         Return a description of the test case.
         """
-        assert self._description is not None, "Description must not be None"
-        return self._description
+        assert self._spec.description is not None, "Description must not be None"
+        return self._spec.description
 
     @property
-    def product_spec(self):
-        """Return the parsed XML product specification.
-        """
-        assert self._product_spec is not None, "Product specification has not been set"
-        return self._product_spec
-
-    @property
-    def test_case_number(self):
+    def test_case_number(self) -> str:
         """
         The four digit number associated with the test case being created.
         """
-        return self._test_case_number
+        return self._spec.test_case_number
 
     # ---------------------------------------------------------------------------
     #  Element Creation Operations
     # ---------------------------------------------------------------------------
 
-    def initialize(self):
+    def initialize(self) -> str:
         """
         Create the initial hierarchy of a test case file.
         """
-        root = TestCase.create_html()
+        root = self.create_html()
         head = self.create_head()
         root.append(head)
         body = self.create_body()
@@ -131,7 +124,7 @@ class TestCase:
         return self._html
 
     @staticmethod
-    def create_html():
+    def create_html() -> Element:
         """
         Return an HTML element with the namespace defined
 
@@ -145,7 +138,7 @@ class TestCase:
         root = Element("html", attrib)
         return root
 
-    def create_head(self):
+    def create_head(self) -> Element:
         """
         Return the head element.
         """
@@ -158,7 +151,7 @@ class TestCase:
         return head
 
     @staticmethod
-    def create_style():
+    def create_style() -> Element:
         """
         Create the style element that defines the unique and claimnumber classes.
         """
@@ -182,7 +175,7 @@ class TestCase:
         style.text = css
         return style
 
-    def create_body(self):
+    def create_body(self) -> Element:
         """
         Create the body element
         """
@@ -194,10 +187,47 @@ class TestCase:
         body.append(test_description)
         hr = Element("hr")
         body.append(hr)
-        create_test_tables(body, self.product_spec, self.test_case_number)
+        self.create_test_tables(body)
         return body
 
-    def create_test_description(self):
+    def create_test_tables(self, body: Element):
+        """
+        Create the test tables specific to this test case.
+
+        Arguments:
+            body - the body of the HTML page
+            spec - the test specification
+        """
+
+        for table_spec in self._spec.tables:
+            self.format_test_table(body, table_spec)
+        return
+
+    def format_test_table(self, body: Element, table_spec: TestTableSpecification):
+        """
+        Add the H2 heading and the test table to the body of test case.
+
+        Arguments:
+            body - the body of the test case
+            table_spec - an instance of the test table specification
+        """
+        heading = self.create_heading(table_spec.heading)
+        body.append(heading)
+        table = ColumnTestTable(body, table_spec)
+        element = table.create_table()
+        body.append(element)
+        return
+
+    @staticmethod
+    def create_heading(title):
+        """
+        Create an H2 heading with the title from the test table.
+        """
+        h2 = Element("h2")
+        h2.text = title
+        return h2
+
+    def create_test_description(self) -> Element:
         """
         Create a description list element with information about the test case.
         """
@@ -211,7 +241,7 @@ class TestCase:
         return dl
 
     @staticmethod
-    def create_dl_dt(dl, term, description):
+    def create_dl_dt(dl, term: str, description: str):
         """
         Create a par of element (dt and dd) and append them to a dl element
 
@@ -233,7 +263,7 @@ class TestCase:
     # ---------------------------------------------------------------------------
 
     @staticmethod
-    def prettify(elem):
+    def prettify(elem) -> str:
         """
         Return a pretty-printed XML string for the element elem.
         """

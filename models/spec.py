@@ -33,6 +33,9 @@ class TestTableSpecification:
         self.heading: str = ""
         self.fixture: str = ""
         self.columns: list[str] = []
+        self.test_id_prefix = ""
+        self.test_id_start = 10
+        self.spec = None
         self.rows: list[list[str]] = []
         return
 
@@ -73,11 +76,13 @@ class TestCaseSpecification:
         """
         Initialize an instance of this class.
         """
+        self.project_name: str = ""
         self.suite_name: str = ""
         self.suite_id: str = ""
         self.description: str = ""
-        self.project_name: str = ""
         self.version: str = ""
+        self.author = ""
+        self.test_case_number = ""
         self.seed: int = 67887
         self.tables: list[TestTableSpecification] = []
         return
@@ -106,4 +111,5 @@ class TestCaseSpecification:
         """
         assert test_table is not None, "test table must not be None"
         self.tables.append(test_table)
+        test_table.spec = self
         return

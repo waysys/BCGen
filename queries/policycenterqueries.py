@@ -16,6 +16,7 @@ from datetime import datetime
 
 from base.connector import Connector
 from base.query import Query
+from pyodbc import Connection
 
 account_query = """
 DECLARE @SelectionStart DATE = ?
@@ -69,7 +70,7 @@ class PolicyCenterQueries:
     #  Constructor
     # ---------------------------------------------------------------------------
 
-    def __init__(self, cnx: Connector):
+    def __init__(self, cnx: Connection):
         """
         Initialize the instance of a class.
 

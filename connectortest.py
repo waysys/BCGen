@@ -17,7 +17,7 @@ from datetime import datetime
 
 import xmlrunner
 
-from base.connector import ConnectorWindows
+from base.connector import ConnectorWindows, Connector
 from configuration.configuration import ConnectorTestConfiguration
 from queries.policycenterqueries import PolicyCenterQueries
 
@@ -46,10 +46,7 @@ class TestConnector(unittest.TestCase):
         """
         Initialize the connector.
         """
-        self.connector = ConnectorWindows()
-        self.connector.dsn = self.configuration.data_source
-        self.connector.database = self.configuration.database
-        self.cnx = self.connector.connect()
+        self.cnx = Connector.create_connector(self.configuration.data_source, self.configuration.database)
         return
 
     def tearDown(self):
@@ -59,14 +56,6 @@ class TestConnector(unittest.TestCase):
     # -------------------------------------------------------------------------------
     #  Tests
     # -------------------------------------------------------------------------------
-
-    def test_01_connect_string(self):
-        """
-        Test that the connection string is built properly.
-        """
-        connection_string = self.connector.build_connection_string()
-        print(connection_string)
-        return
 
     def test_02_database_connection(self):
         """

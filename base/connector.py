@@ -15,12 +15,11 @@ This module manages a connection to SQL Server
 
 import pyodbc
 from string import Template
-import base.environments as environments
-
 
 # -------------------------------------------------------------------------------
 # Connector class for SQL Server Authentication
 # -------------------------------------------------------------------------------
+
 
 class Connector:
     """
@@ -129,7 +128,7 @@ class Connector:
     # Operations
     # -------------------------------------------------------------------------------
 
-    def connect(self):
+    def connect(self) -> pyodbc.Connection:
         """
         Connect to a SQL Server database and return the connection.
         """
@@ -150,32 +149,27 @@ class Connector:
         return connection_string
 
     @staticmethod
-    def create_connector(environ):
+    def create_connector(server: str, database: str) -> pyodbc.Connection:
         """
         Create and return a connector to the database with the parameters from the environment.
 
         Argument:
             environ - the code for the environment
         """
-        if environments.is_data_source_connection(environ):
-            connector = ConnectorWindows()
-            params = environments.get_environment(environ)
-            connector.dsn = params[0]
-            connector.database = params[1]
-        else:
-            connector = Connector()
-            params = environments.get_environment(environ)
-            connector.server = params[0]
-            connector.database = params[1]
-            connector.username = params[2]
-            connector.password = params[3]
+        assert server is not None, "Server name must not be None"
+        assert len(server) > 0, "Server name must not be empty"
+        assert database is not None, "Database name must not be None"
+        assert len(database) > 0, "Database name must not be empty"
+        connector = ConnectorWindows()
+        connector.dsn = server
+        connector.database = database
         cnx = connector.connect()
         return cnx
-
 
 # -------------------------------------------------------------------------------
 # Connector class for SQL Server Authentication
 # -------------------------------------------------------------------------------
+
 
 class ConnectorWindows(Connector):
     """
