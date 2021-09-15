@@ -33,6 +33,7 @@ class TestTableSpecification:
         self.heading: str = ""
         self.fixture: str = ""
         self.columns: list[str] = []
+        self.is_unique: list[bool] = []
         self.test_id_prefix = ""
         self.test_id_start = 10
         self.spec = None
@@ -82,7 +83,6 @@ class TestCaseSpecification:
         self.description: str = ""
         self.version: str = ""
         self.author = ""
-        self.test_case_number = ""
         self.seed: int = 67887
         self.tables: list[TestTableSpecification] = []
         return
@@ -113,3 +113,17 @@ class TestCaseSpecification:
         self.tables.append(test_table)
         test_table.spec = self
         return
+
+    def build_test_suite_directory(self, test_suite_directory):
+        """
+        Construct the full test suite directory consisting of:
+        -- the test suite directory
+        -- the project name
+        -- the test suite name
+
+        Arguments:
+            test_suite_directory - the path that points to a directory with
+               subdirectories for projects.
+        """
+        full_path = test_suite_directory + "/" + self.project_name + "/" + self.suite_name
+        return full_path

@@ -38,19 +38,20 @@ class FileBuilder:
     The main role of this class is to handle the input/output for the test case.
     """
 
-    def __init__(self, spec: TestCaseSpecification, test_suite_library: str, num: int):
+    def __init__(self, spec: TestCaseSpecification, test_suite_dir: str, num: int):
         """
         Initialize this class.
 
         Arguments:
-            test_suite_library - the directory where the test suite will be placed
+            spec - the test case specification
+            test_suite_dir - the directory where the test suite will be placed
         """
         assert spec is not None, "FileBuilder: Test specification must not be None"
-        assert test_suite_library is not None, "FileBuilder: test suite library must not be null"
-        assert len(test_suite_library) > 0, "FileBuilder: test suit library must not be empty"
+        assert test_suite_dir is not None, "FileBuilder: test suite library must not be null"
+        assert len(test_suite_dir) > 0, "FileBuilder: test suit library must not be empty"
         assert num > 0, "Test case number must be greater than 0, not - " + str(num)
         self._spec = spec
-        self._test_suite_library = test_suite_library
+        self._test_suite_dir = test_suite_dir
         self._num = num
         return
 
@@ -59,11 +60,11 @@ class FileBuilder:
     # ---------------------------------------------------------------------------
 
     @property
-    def test_suite_library(self) -> str:
+    def test_suite_dir(self) -> str:
         """
         Return the name of the directory that will hold the test suite directory
         """
-        return self._test_suite_library
+        return self._test_suite_dir
 
     @property
     def suite_name(self) -> str:
@@ -72,14 +73,6 @@ class FileBuilder:
         """
         name = self._spec.suite_name
         return name
-
-    @property
-    def test_suite_dir(self) -> str:
-        """
-        Return the directory path where the test case files will reside.
-        """
-        direct = self.test_suite_library + "/" + self.suite_name
-        return direct
 
     @property
     def test_case_number(self) -> str:
@@ -114,7 +107,7 @@ class FileBuilder:
         """
         Generate a test case file in the test suite directory.
         """
-        test_case = TestCase(self._spec)
+        test_case = TestCase(self._spec, 1)
         html = test_case.initialize()
         self.output(html)
         return

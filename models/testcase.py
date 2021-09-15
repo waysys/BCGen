@@ -41,7 +41,7 @@ class TestCase:
     """
     The TestCase class models an HTML elements used for GFIT test cases.
     The class creates the descriptive information at the beginning of the
-    test case and calls a function in the testcasetable module to create
+    test case and calls a function in the test case table module to create
     the specific tables for this test case..
     """
 
@@ -49,18 +49,21 @@ class TestCase:
     #  Constructor
     # ---------------------------------------------------------------------------
 
-    def __init__(self, spec: TestCaseSpecification):
+    def __init__(self, spec: TestCaseSpecification, num: int):
         """
         Initialize the class.
 
         Argument:
-            spec - the test case specification for this thest case.
+            spec - the test case specification for this test case.
+            num - the differentiating number for this test case
         """
-        self._html = None
-        self._author = spec.author
-        self._description = spec.description
-        self._test_case_number = self.test_case_number
-        self._spec = spec
+        assert spec is not None, "Test specification must not be None"
+        assert num > 0, "Test case number must be positive, not: " + str(num)
+        self._html: Element = Element("html")
+        self._author: str = spec.author
+        self._description: str = spec.description
+        self._test_case_number: int = num
+        self._spec: TestCaseSpecification = spec
         return
 
     # ---------------------------------------------------------------------------
@@ -105,7 +108,10 @@ class TestCase:
         """
         The four digit number associated with the test case being created.
         """
-        return self._spec.test_case_number
+        result = str(self._test_case_number)
+        while len(result) < 4:
+            result = "0" + result
+        return result
 
     # ---------------------------------------------------------------------------
     #  Element Creation Operations
@@ -153,7 +159,7 @@ class TestCase:
     @staticmethod
     def create_style() -> Element:
         """
-        Create the style element that defines the unique and claimnumber classes.
+        Create the style element that defines the unique and claim number classes.
         """
         attrib = {
             "type": "text/css"
@@ -234,8 +240,8 @@ class TestCase:
         dl = Element("dl")
         TestCase.create_dl_dt(dl, "Project:", self.project)
         TestCase.create_dl_dt(dl, "Author:", self.author)
-        adate = str(date.today())
-        TestCase.create_dl_dt(dl, "Date:", adate)
+        a_date = str(date.today())
+        TestCase.create_dl_dt(dl, "Date:", a_date)
         TestCase.create_dl_dt(dl, "Repeatable:", "Yes")
         TestCase.create_dl_dt(dl, "Description:", self.description)
         return dl

@@ -14,22 +14,26 @@ case generation framework uses a test case specification to generate HTML
 test case files for the GFIT tool for testing Guidewire InsuranceSuite applications.
 """
 
+import math
 import sys
 import time
 import traceback
-import math
+from pathlib import Path
 
-from base.testexception import TestException
-from testspecs.account_test_case import AccountCheckTest
-from configuration.configuration import ConnectorTestConfiguration
 from base.connector import Connector
+from base.testexception import TestException
+from configuration.configuration import ConnectorTestConfiguration
 from models.spec import TestCaseSpecification
+from testspecs.account_test_case import AccountCheckTest
+from testspecs.invoice_test_case import InvoiceCheckTest
+from files.filebuilder import FileBuilder
 
 # -------------------------------------------------------------------------------
 #  Global Variables
 # -------------------------------------------------------------------------------
 
 configuration = ConnectorTestConfiguration()
+
 
 # -------------------------------------------------------------------------------
 #  Main Function
@@ -82,7 +86,10 @@ def generate(spec_name: str, test_suite_directory: str):
     assert spec_name is not None, "Specification name must not be None"
     assert len(spec_name) > 0, "Specificaiton name must not be an empty string"
     spec = determine_spec(spec_name)
-    return spec
+    output_directory = create_output_directory(spec, test_suite_directory)
+    file_builder = FileBuilder(spec, output_directory, 1)
+    file_builder.produce_test_case()
+    return
 
 
 def determine_spec(spec_name: str) -> TestCaseSpecification:
@@ -93,9 +100,41 @@ def determine_spec(spec_name: str) -> TestCaseSpecification:
         cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = AccountCheckTest(cnx)
         cnx.close()
+    elif spec_name == "InvoiceCheckTest":
+        cnx = Connector.create_connector(configuration.data_source, configuration.database)
+        spec = InvoiceCheckTest(cnx)
+        cnx.close()
     else:
         raise TestException("Unsupported test specification: " + spec_name)
     return spec
+
+
+def create_output_directory(spec: TestCaseSpecification, test_suite_directory: str) -> str:
+    """
+    Create the full directory for the test suite.  It is the concatenation of:
+    -- the test suite directory
+    -- the project name
+    -- the test suite name
+
+    """
+    validate_directory(test_suite_directory)
+    full_path = spec.build_test_suite_directory(test_suite_directory)
+    validate_directory(full_path)
+    return full_path
+
+
+def validate_directory(dir: str):
+    """
+    Check that the directory exists and is a directory.
+
+    Arguments:
+        dir - a directory path to be checked
+    """
+    path = Path(dir)
+    if not path.is_dir():
+        raise TestException("Path is not a directory: " + dir)
+    return
+
 
 
 # ---------------------------------------------------------------------------

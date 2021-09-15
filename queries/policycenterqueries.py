@@ -14,9 +14,9 @@ This module contains queries of PolicyCenter
 
 from datetime import datetime
 
-from base.connector import Connector
-from base.query import Query
 from pyodbc import Connection
+
+from base.query import Query
 
 account_query = """
 DECLARE @SelectionStart DATE = ?
@@ -53,8 +53,44 @@ WHERE  acct.retired = 0
        AND acrt.typecode = 'AccountHolder'
        AND acct.createtime >= @SelectionStart
        AND acct.createtime < @SelectionEnd 
+       AND ast.typecode = 'Active'
 """
 
+
+policy_periods_query = """
+DECLARE @SelectionEnd DATE = ?
+DECLARE @NumberRows INT = ?
+
+SELECT TOP (@NumberRows) ac.accountnumber    AS AccountNumber,
+                         pp.policynumber     AS PolicyNumber,
+                         pp.periodstart      AS PeriodStart,
+                         pp.periodend        AS PeriodEnd,
+                         pp.cancellationdate AS CancellationDate,
+                         pp.taxsurchargesrpt AS Taxes,
+                         pp.totalpremiumrpt  AS Premium,
+                         pp.totalcostrpt     AS TotalInvoicedAmount,
+                         ps.NAME             AS PaymentPlan,
+                         bp.typecode         AS BillingPeriodicity,
+                         pps.typecode        AS Status,
+                         ps.billingid        AS BillingID
+FROM   pc_policyperiod pp
+       JOIN pc_policy pl
+         ON pp.policyid = pl.id
+       JOIN pc_account ac
+         ON pl.accountid = ac.id
+       JOIN pc_paymentplansummary ps
+         ON ps.policyperiod = pp.id
+       JOIN pctl_billingperiodicity bp
+         ON ps.invoicefrequency = bp.id
+       JOIN pctl_policyperiodstatus pps
+         ON pp.status = pps.id
+WHERE  pp.retired = 0
+       AND ps.retired = 0
+       AND pp.createtime < @SelectionEnd
+       AND pps.typecode = 'Bound'
+       AND pp.cancellationdate IS NULL
+ORDER  BY pp.createtime DESC 
+"""
 
 # -------------------------------------------------------------------------------
 #  PolicyCenter Queries
@@ -100,4 +136,19 @@ class PolicyCenterQueries:
         assert selection_start < selection_end, "selection start " + str(selection_start) + \
                                                 " must be before selection end " + str(selection_end)
         results = self.query.query(account_query, selection_start, selection_end)
+        return list(results)
+
+    def query_policy_periods(self, selection_end: datetime, number_rows: int) -> list:
+        """
+        Return a list of policy periods created before the selection end date.  The list
+        is limited to the number indicated by number_rows.
+
+        The most recently created policy periods are listed first, so this query will return
+        the most recently created policy periods created prior to the selection_end date.
+
+        The policy periods will be bound and will not include cancelled policy periods.
+        """
+        assert selection_end is not None, "selection end must not be None"
+        assert number_rows > 0, "The number of rows must be greater than 0, not " + str(number_rows)
+        results = self.query.query(policy_periods_query, selection_end, number_rows)
         return list(results)

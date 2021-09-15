@@ -29,9 +29,12 @@ from xml.etree.ElementTree import Element
 
 from models.spec import TestTableSpecification
 
+
 # -------------------------------------------------------------------------------
 #  Test table class
 # -------------------------------------------------------------------------------
+
+ATTRIBUtE = {"class": "unique"}
 
 
 class TestTable:
@@ -43,7 +46,7 @@ class TestTable:
     #  Constructor
     # ---------------------------------------------------------------------------
 
-    def __init__(self, body, table_spec: TestTableSpecification):
+    def __init__(self, body: Element, table_spec: TestTableSpecification):
         """
         Initialize the instance of this class.
 
@@ -53,18 +56,9 @@ class TestTable:
         """
         assert body is not None, "Test case body must not be None"
         assert table_spec is not None, "Product specification must not be None"
-        # fixture set in subclasses
-        self._table_spec = table_spec
-        self._fixture = None
-        self._rows = []
-        self._body = body
-        self._table = None
-        self._title = None
-        self._num = 0
-        self._role = None
-        self._role_abbreviation = None
-        self._attribute = {"class": "unique"}
-        self._submission_id = None
+        self._table_spec: TestTableSpecification = table_spec
+        self._body: Element = body
+        self._table: Element = Element("table")
         return
 
     # ---------------------------------------------------------------------------
@@ -76,34 +70,34 @@ class TestTable:
         """
         Return the suite id
         """
-        suiteid = self._table_spec.spec.suite_id
-        return suiteid
+        suite_id = self._table_spec.spec.suite_id
+        return suite_id
 
     @property
     def fixture(self):
         """
         The full path of the fixture.
         """
-        assert self._fixture is not None, "fixture has not been set."
-        return self._fixture
+        assert self._table_spec.fixture is not None, "fixture has not been set."
+        return self._table_spec.fixture
 
     @property
     def title(self):
         """
         The text that goes in an H2 element describing a table.
         """
-        assert self._title is not None, "Title has not been set"
-        return self._title
+        assert self._table_spec.heading is not None, "Title has not been set"
+        return self._table_spec.heading
 
     @property
-    def body(self):
+    def body(self) -> Element:
         """
         The HTML body of the test case
         """
         return self._body
 
     @property
-    def table(self):
+    def table(self) -> Element:
         """
         The table being worked on.
         """
@@ -111,27 +105,30 @@ class TestTable:
         return self._table
 
     @property
-    def attribute(self):
+    def table_spec(self) -> TestTableSpecification:
         """
-        Return the dictionary holding the class attribute.
-        """
-        return self._attribute
-
-    @property
-    def table_spec(self):
-        """
-        Return the product specification instance.
+        Return the table specification.
         """
         return self._table_spec
+
+    @property
+    def rows(self) -> list[list[str]]:
+        """
+        Return the list of row values.
+        """
+        return self._table_spec.rows
 
     # ---------------------------------------------------------------------------
     #  Operations
     # ---------------------------------------------------------------------------
 
-    def create_table(self):
-        """Create heading and a table element"""
+    def create_table(self) -> Element:
+        """
+        Create heading and a table element
+        """
         attrib = {"border": "1"}
         self._table = Element("table", attrib)
+        self.add_fixture()
         return self._table
 
     def add_row(self, values, is_unique):
@@ -154,7 +151,7 @@ class TestTable:
         index = 0
         for value in values:
             if (is_unique is not None) and is_unique[index]:
-                td = Element("td", self.attribute)
+                td = Element("td", ATTRIBUtE)
             else:
                 td = Element("td")
             td.text = value
@@ -194,7 +191,6 @@ class ColumnTestTable(TestTable):
             body -
         """
         super().__init__(body, table_spec)
-        self._headings = []
         # set the row number to -1 to account for the fixture and heading rows.
         # Row 1 should be the first row of data.
         self._row_number = -1
@@ -209,20 +205,7 @@ class ColumnTestTable(TestTable):
         """
         The headings row on a column fixture.
         """
-        return self._headings
-
-    @headings.setter
-    def headings(self, row):
-        """
-        Set the headings property to the string array row.
-
-        Arguments:
-            row - an array of strings representing the column properties
-        """
-        assert row is not None, "Headings must not be None"
-        assert len(row) > 0, "Headings must not be empty"
-        self._headings = row
-        return
+        return self._table_spec.columns
 
     @property
     def row_number(self):
@@ -236,10 +219,30 @@ class ColumnTestTable(TestTable):
     #  Operations
     # ---------------------------------------------------------------------------
 
-    def add_row(self, values, is_unqiue):
+    def create_table(self):
+        """
+        Create heading and a table element
+        """
+        super().create_table()
+        #
+        # Add the column headings with class attribute where required
+        #
+        self.add_row(self.headings, self.table_spec.is_unique)
+        #
+        # Add the test rows
+        #
+        for row in self.rows:
+            self.add_row(row, None)
+        return self._table
+
+    def add_row(self, values, is_unique):
         """
         Overriding add_row in super class to increment row number.
+
+        Arguments:
+            values - a list of strings representing the values in the table cells
+            is_unique - a list of booleans indicating if the value should have a class of unique.
         """
-        super().add_row(values, is_unqiue)
+        super().add_row(values, is_unique)
         self._row_number += 1
         return

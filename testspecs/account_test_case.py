@@ -31,7 +31,7 @@ class AccountCheckTestTable(TestTableSpecification):
     #  Constructor
     # ---------------------------------------------------------------------------
 
-    def __init__(self):
+    def __init__(self, cnx: Connection):
         """
         Specify the characteristics of the test table.
         """
@@ -39,9 +39,47 @@ class AccountCheckTestTable(TestTableSpecification):
         self.heading = "Check that accounts exist"
         self.fixture = "castlebay.gfit.billingcenter.AccountCheckFixture"
         self.columns = ["TestId", "Account Number", "Comment"]
+        self.is_unique = [False, False, False]
         self.test_id_start = 10
         self.test_id_prefix = "ACCT-CHECK-"
+        #
+        # Set up query of PolicyCenter
+        #
+        self.pc_queries = PolicyCenterQueries(cnx)
+        self.selection_start = datetime(2021, 9, 1)
+        self.selection_end = datetime(2021, 9, 3)
         return
+
+    # ---------------------------------------------------------------------------
+    #  Operations
+    # ---------------------------------------------------------------------------
+
+    def generate_rows(self):
+        """
+        Generate the rows for the test table.
+        """
+        accounts = self.pc_queries.query_accounts(self.selection_start, self.selection_end)
+        count = self.test_id_start
+        for account in accounts:
+            row = self.create_row(self.test_id_prefix, count, account)
+            self.add_row(row)
+            count += 1
+        return
+
+    @staticmethod
+    def create_row(prefix: str, count: int, account) -> list[str]:
+        """
+        Create a row for the test table.
+
+        Arguments:
+            account - a row from a query of the account table in PolicyCenter
+        """
+        row = []
+        test_id = prefix + str(count)
+        row.append(test_id)
+        row.append(account.AccountNumber)
+        row.append("Check account " + account.AccountNumber)
+        return row
 
 
 # -------------------------------------------------------------------------------
@@ -67,47 +105,14 @@ class AccountCheckTest(TestCaseSpecification):
         super().__init__()
         self.project_name = "BillingCenterProject"
         self.suite_name = "AccountCheck"
+        self.suite_id = "ACCOUNT_CHECK"
         self.description = "This test case checks that BillingCenter has the specified accounts from PolicyCenter."
         self.version = "2021-09-03"
         self.author = "W. Shaffer"
-        self.test_case_number = "1000"
         #
-        # Set up query of PolicyCenter
+        # Specify the tables in the test case
         #
-        self.pc_queries = PolicyCenterQueries(cnx)
-        self.selection_start = datetime(2021, 9, 1)
-        self.selection_end = datetime(2021, 9, 3)
+        table = AccountCheckTestTable(cnx)
+        table.generate_rows()
+        self.add_test_table(table)
         return
-
-    # ---------------------------------------------------------------------------
-    #  Operations
-    # ---------------------------------------------------------------------------
-
-    def generate_rows(self):
-        """
-        Generate the rows for the test table.
-        """
-        table = AccountCheckTestTable()
-        accounts = self.pc_queries.query_accounts(self.selection_start, self.selection_end)
-        count = table.test_id_start
-        for account in accounts:
-            row = self.create_row(table.test_id_prefix, count, account)
-            table.add_row(row)
-            count += 1
-        return
-
-    @staticmethod
-    def create_row(prefix: str, count: int, account) -> list[str]:
-        """
-        Create a row for the test table.
-
-        Arguments:
-            account - a row from a query of the account table in PolicyCenter
-        """
-        row = []
-        test_id = prefix + str(count)
-        row.append(test_id)
-        row.append(account.AccountNumber)
-        row.append("Check account " + account.AccountNumber)
-        return row
-
