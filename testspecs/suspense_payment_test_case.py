@@ -9,7 +9,7 @@ __author__ = 'Bill Shaffer'
 __version__ = "16-Sep-2021"
 
 """
-
+This module specifies the Suspense Payment Make
 """
 
 # -------------------------------------------------------------------------------
