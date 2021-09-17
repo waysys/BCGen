@@ -83,6 +83,7 @@ class TestCaseSpecification:
         self.description: str = ""
         self.version: str = ""
         self.author = ""
+        self.repeatable = "Yes"
         self.seed: int = 67887
         self.tables: list[TestTableSpecification] = []
         return

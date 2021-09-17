@@ -6,10 +6,10 @@
 # -------------------------------------------------------------------------------
 #
 __author__ = 'Bill Shaffer'
-__version__ = "16-Sep-2021"
+__version__ = "17-Sep-2021"
 
 """
-This module specifies the Suspense Payment Make Test Case
+This module specifies the Account Payment Make test case.
 """
 
 from models.spec import TestTableSpecification, TestCaseSpecification
@@ -17,16 +17,15 @@ from pyodbc import Connection
 from queries.policycenterqueries import PolicyCenterQueries
 from datetime import datetime
 from base.uniqueid import gen_unique_id
-from base.testrandom import Random, DEFAULT_SEED
 
 # -------------------------------------------------------------------------------
-#  Suspense Payment Make Test Table
+#  Account Payment Make Test Table
 # -------------------------------------------------------------------------------
 
 
-class SuspensePaymentMakeTestTable(TestTableSpecification):
+class AccountPaymentMakeTestTable(TestTableSpecification):
     """
-    This class specifies how the suspense payment make test table is formed.
+    This class specifies how the account payment make test table is formed.
     """
 
     # ---------------------------------------------------------------------------
@@ -38,17 +37,16 @@ class SuspensePaymentMakeTestTable(TestTableSpecification):
         Specify the characteristics of the test table.
         """
         super().__init__()
-        self.random = Random(DEFAULT_SEED)
-        self.heading = "Create suspense payments"
-        self.fixture = "castlebay.gfit.billingcenter.SuspensePaymentMakeFixture"
+        self.heading = "Create account direct payments"
+        self.fixture = "castlebay.gfit.billingcenter.AccountPaymentMakeFixture"
         self.columns = ["TestId",
-                        "RefNumber",
                         "Account Number",
+                        "RefNumber",
                         "Payment Amount",
                         "Comment"]
         self.is_unique = [False, False, False, False, False]
         self.test_id_start = 10
-        self.test_id_prefix = "SUSPENSE-PAYMENT-"
+        self.test_id_prefix = "ACCOUNT-PAYMENT-"
         self.ref_prefix = gen_unique_id()
         self.payment_range = (100, 1000)
         #
@@ -62,13 +60,6 @@ class SuspensePaymentMakeTestTable(TestTableSpecification):
     # ---------------------------------------------------------------------------
     #  Properties
     # ---------------------------------------------------------------------------
-
-    @property
-    def payment_amount(self) -> str:
-        """
-        Return a random payment amount in dollars.
-        """
-        return self.random.get_random(self.payment_range)
 
     # ---------------------------------------------------------------------------
     #  Operations
@@ -91,16 +82,16 @@ class SuspensePaymentMakeTestTable(TestTableSpecification):
         Create a row for the test table.
 
         Arguments:
-           prefix - the prefix for the test id
+            prefix - the prefix for the test id
             count - the number of the row
             policy_period - a row from the results of a query of the policy period and related data
         """
         row = [
             prefix + str(count),
-            self.ref_prefix + str(count),
             policy_period.AccountNumber,
-            self.payment_amount,
-            "Create suspense payment"
+            self.ref_prefix + str(count),
+            str(policy_period.TotalInvoicedAmount),
+            "Create account payment"
         ]
         return row
 
@@ -109,7 +100,7 @@ class SuspensePaymentMakeTestTable(TestTableSpecification):
 # -------------------------------------------------------------------------------
 
 
-class SuspensePaymentMakeTest(TestCaseSpecification):
+class AccountPaymentMakeTest(TestCaseSpecification):
     """
     This class specifies how the test case for the suspense payment make test case.
     """
@@ -126,20 +117,20 @@ class SuspensePaymentMakeTest(TestCaseSpecification):
         assert cnx is not None, "connection must not be None"
         super().__init__()
         self.project_name = "BillingCenterProject"
-        self.suite_name = "SuspensePaymentMake"
-        self.suite_id = "SUSPENSE_PAYMENT_MAKE"
+        self.suite_name = "AccountPaymentMake"
+        self.suite_id = "ACCOUNT_PAYMENT_MAKE"
         self.description = \
             """
-            This test case creates suspense payments of various amount.  This test case is a one-time test case.
+            This test case creates direct accounts payments of various amount.  This test case is a one-time test case.
             New suspense payments should be generated each time an execution of the test case is desired.
             """
-        self.version = "2021-09-16"
+        self.version = "2021-09-17"
         self.author = "W. Shaffer"
         self.repeatable = "No"
         #
         # Specify the tables in the test case
         #
-        table = SuspensePaymentMakeTestTable(cnx)
+        table = AccountPaymentMakeTestTable(cnx)
         table.generate_rows()
         self.add_test_table(table)
         return

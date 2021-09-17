@@ -242,7 +242,7 @@ class TestCase:
         TestCase.create_dl_dt(dl, "Author:", self.author)
         a_date = str(date.today())
         TestCase.create_dl_dt(dl, "Date:", a_date)
-        TestCase.create_dl_dt(dl, "Repeatable:", "Yes")
+        TestCase.create_dl_dt(dl, "Repeatable:", self._spec.repeatable)
         TestCase.create_dl_dt(dl, "Description:", self.description)
         return dl
 

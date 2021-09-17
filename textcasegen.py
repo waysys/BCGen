@@ -26,6 +26,8 @@ from configuration.configuration import ConnectorTestConfiguration
 from models.spec import TestCaseSpecification
 from testspecs.account_test_case import AccountCheckTest
 from testspecs.invoice_test_case import InvoiceCheckTest
+from testspecs.suspense_payment_test_case import SuspensePaymentMakeTest
+from testspecs.account_payment_test_case import AccountPaymentMakeTest
 from files.filebuilder import FileBuilder
 
 # -------------------------------------------------------------------------------
@@ -104,6 +106,14 @@ def determine_spec(spec_name: str) -> TestCaseSpecification:
         cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = InvoiceCheckTest(cnx)
         cnx.close()
+    elif spec_name == "SuspensePaymentMake":
+        cnx = Connector.create_connector(configuration.data_source, configuration.database)
+        spec = SuspensePaymentMakeTest(cnx)
+        cnx.close()
+    elif spec_name == "AccountPaymentMake":
+        cnx = Connector.create_connector(configuration.data_source, configuration.database)
+        spec = AccountPaymentMakeTest(cnx)
+        cnx.close()
     else:
         raise TestException("Unsupported test specification: " + spec_name)
     return spec
@@ -123,19 +133,17 @@ def create_output_directory(spec: TestCaseSpecification, test_suite_directory: s
     return full_path
 
 
-def validate_directory(dir: str):
+def validate_directory(direct: str):
     """
     Check that the directory exists and is a directory.
 
     Arguments:
-        dir - a directory path to be checked
+        direct - a directory path to be checked
     """
-    path = Path(dir)
+    path = Path(direct)
     if not path.is_dir():
-        raise TestException("Path is not a directory: " + dir)
+        raise TestException("Path is not a directory: " + direct)
     return
-
-
 
 # ---------------------------------------------------------------------------
 #  Main
