@@ -16,6 +16,7 @@ from random import randrange, seed
 
 DEFAULT_SEED = 67889
 
+
 # -------------------------------------------------------------------------------
 #  Random
 # -------------------------------------------------------------------------------
@@ -54,3 +55,14 @@ class Random:
         assert number_range[0] < number_range[1], "For number range, first element must be less than second"
         value = randrange(number_range[0], number_range[1])
         return str(value)
+
+    @staticmethod
+    def select(weight: int) -> bool:
+        """
+        Return True if a random number is less than the weight.
+
+        Arguments:
+            weight - a value between 0 and 100 inclusive
+        """
+        random_num = randrange(0, 100)
+        return random_num < weight

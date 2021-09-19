@@ -29,7 +29,6 @@ from xml.etree.ElementTree import Element
 
 from models.spec import TestTableSpecification
 
-
 # -------------------------------------------------------------------------------
 #  Test table class
 # -------------------------------------------------------------------------------
@@ -208,12 +207,19 @@ class ColumnTestTable(TestTable):
         return self._table_spec.columns
 
     @property
-    def row_number(self):
+    def number_rows(self):
         """
         The number of the row in the table.  The first row with data, after
         the fixture and headings, is number 1.
         """
-        return self._row_number
+        return len(self._table_spec.rows) - 1
+
+    @property
+    def has_rows(self):
+        """
+        Return True if the table has at least one row of data.
+        """
+        return self.number_rows > 0
 
     # ---------------------------------------------------------------------------
     #  Operations

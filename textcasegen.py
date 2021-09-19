@@ -28,6 +28,7 @@ from testspecs.account_test_case import AccountCheckTest
 from testspecs.invoice_test_case import InvoiceCheckTest
 from testspecs.suspense_payment_test_case import SuspensePaymentMakeTest
 from testspecs.account_payment_test_case import AccountPaymentMakeTest
+from testspecs.policy_payment_test_case import PaymentMakeTest
 from files.filebuilder import FileBuilder
 
 # -------------------------------------------------------------------------------
@@ -113,6 +114,10 @@ def determine_spec(spec_name: str) -> TestCaseSpecification:
     elif spec_name == "AccountPaymentMake":
         cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = AccountPaymentMakeTest(cnx)
+        cnx.close()
+    elif spec_name == "PaymentMake":
+        cnx = Connector.create_connector(configuration.data_source, configuration.database)
+        spec = PaymentMakeTest(cnx)
         cnx.close()
     else:
         raise TestException("Unsupported test specification: " + spec_name)

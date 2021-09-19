@@ -58,6 +58,21 @@ class TestTableSpecification:
         self.rows.append(row)
         return
 
+    @property
+    def number_rows(self):
+        """
+        The number of the row in the table.  The first row with data, after
+        the fixture and headings, is number 1.
+        """
+        return len(self.rows) - 1
+
+    @property
+    def has_rows(self):
+        """
+        Return True if the table has at least one row of data.
+        """
+        return self.number_rows > 0
+
 # -------------------------------------------------------------------------------
 #  Test Case Specification
 # -------------------------------------------------------------------------------
