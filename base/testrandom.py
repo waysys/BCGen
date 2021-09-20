@@ -66,3 +66,17 @@ class Random:
         """
         random_num = randrange(0, 100)
         return random_num < weight
+
+    @staticmethod
+    def select_from_list(a_list: list[str]) -> str:
+        """
+        Select one of the items in the list at random.
+
+        Arguments:
+            a_list - a list of strings
+        """
+        assert a_list is not None, "The list must not be None"
+        assert len(a_list) > 0, "The list must not be empty"
+        size = len(a_list)
+        random_number = randrange(0, size)
+        return a_list[random_number]

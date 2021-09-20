@@ -16,8 +16,10 @@ from datetime import datetime
 
 from pyodbc import Connection
 
+from base.testrandom import Random, DEFAULT_SEED
 from base.uniqueid import gen_unique_id
 from models.spec import TestTableSpecification, TestCaseSpecification
+from models.paymenthistory import PaymentHistory
 from queries.policycenterqueries import PolicyCenterQueries
 
 
@@ -40,7 +42,7 @@ class PaymentMakeTestTable(TestTableSpecification):
         Specify the characteristics of the test table.
         """
         super().__init__()
-        self.heading = "Create direct polciy payments"
+        self.heading = "Create direct policy payments"
         self.fixture = "castlebay.gfit.billingcenter.PaymentMakeFixture"
         self.columns = ["TestId",
                         "Account Number",
@@ -68,7 +70,7 @@ class PaymentMakeTestTable(TestTableSpecification):
     #  Operations
     # ---------------------------------------------------------------------------
 
-    def generate_rows(self):
+    def generate_rows(self, payment_history: dict[str, PaymentHistory]):
         """
         Generate the rows for the test table.
         """
@@ -78,6 +80,8 @@ class PaymentMakeTestTable(TestTableSpecification):
             if self.is_in_effect(policy_period, self.selection_end):
                 row = self.create_row(self.test_id_prefix, count, policy_period)
                 self.add_row(row)
+                payment_history[row[3]] = PaymentHistory(row[3], policy_period.AccountNumber, False, False)
+                payment_history[row[3]].policy_number = policy_period.PolicyNumber
                 count += 1
         return
 
@@ -116,9 +120,96 @@ class PaymentMakeTestTable(TestTableSpecification):
         ]
         return row
 
+# -------------------------------------------------------------------------------
+#  Write-Off Make Test Table
+# -------------------------------------------------------------------------------
+
+
+class WriteOffMakeTestTable(TestTableSpecification):
+    """
+    This class specifies how the write-off make test table is formed.
+    """
+
+    # ---------------------------------------------------------------------------
+    #  Constructor
+    # ---------------------------------------------------------------------------
+
+    def __init__(self):
+        """
+        Specify the characteristics of the test table.
+        """
+        super().__init__()
+        self.random = Random(DEFAULT_SEED)
+        self.heading = "Create write-offs"
+        self.fixture = "castlebay.gfit.billingcenter.WriteOffMakeFixture"
+        self.columns = ["TestId",
+                        "WriteoffType",
+                        "Account Number",
+                        "Policy Number",
+                        "Amount",
+                        "Reason",
+                        "Valid()",
+                        "Comment"]
+        self.is_unique = [False, False, False, False, False, False, False, False]
+        self.test_id_start = 10
+        self.test_id_prefix = "WRITE-OFF-"
+        self.ref_prefix = gen_unique_id()
+        self.payment_range = (1, 5)
+        self.apply_weight = 90
+        return
+
+    # ---------------------------------------------------------------------------
+    #  Properties
+    # ---------------------------------------------------------------------------
+
+    @property
+    def payment_amount(self) -> str:
+        """
+        Return a random payment amount in dollars.
+        """
+        return self.random.get_random(self.payment_range)
+
+    # ---------------------------------------------------------------------------
+    #  Operations
+    # ---------------------------------------------------------------------------
+
+    def generate_rows(self, payment_history: dict[str, PaymentHistory]):
+        """
+        Generate the rows for the test table.
+        """
+        count = self.test_id_start
+        for key in payment_history:
+            payment = payment_history[key]
+            if self.random.select(self.apply_weight):
+                row = self.create_row(self.test_id_prefix, count, payment)
+                self.add_row(row)
+                count += 1
+        return
+
+    def create_row(self, prefix: str, count: int, payment: PaymentHistory) -> list[str]:
+        """
+        Create a row for the test table.
+
+        Arguments:
+            prefix - the prefix for the test id
+            count - the number of the row
+            policy_period - a row from the results of a query of the policy period and related data
+        """
+        row = [
+            prefix + str(count),
+            "negative write-off",
+            payment.account_number,
+            payment.policy_number,
+            str(self.payment_amount),
+            "miscellaneous",
+            "true",
+            "Create negative write-off"
+        ]
+        return row
+
 
 # -------------------------------------------------------------------------------
-#  Invoice Check Test
+#  Payment Make Test
 # -------------------------------------------------------------------------------
 
 
@@ -150,9 +241,17 @@ class PaymentMakeTest(TestCaseSpecification):
         self.author = "W. Shaffer"
         self.repeatable = "No"
         #
-        # Specify the tables in the test case
+        # Create payment on policy
         #
+        self.payment_history: dict[str, PaymentHistory] = {}
         table = PaymentMakeTestTable(cnx)
-        table.generate_rows()
+        table.generate_rows(self.payment_history)
         self.add_test_table(table)
+        #
+        # Specify negative write-offs
+        #
+        table = WriteOffMakeTestTable()
+        table.generate_rows(self.payment_history)
+        if table.has_rows:
+            self.add_test_table(table)
         return

@@ -38,6 +38,8 @@ class PaymentHistory:
         """
         self.ref_number = ref_number
         self.account_number = account_number
+        self.policy_number = None
         self.applied = applied
         self.reversed = reversed
+        self.disbursed = False
         return

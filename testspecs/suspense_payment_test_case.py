@@ -12,13 +12,16 @@ __version__ = "16-Sep-2021"
 This module specifies the Suspense Payment Make Test Case
 """
 
-from models.spec import TestTableSpecification, TestCaseSpecification
-from models.paymenthistory import PaymentHistory
-from pyodbc import Connection
-from queries.policycenterqueries import PolicyCenterQueries
 from datetime import datetime
-from base.uniqueid import gen_unique_id
+
+from pyodbc import Connection
+
 from base.testrandom import Random, DEFAULT_SEED
+from base.uniqueid import gen_unique_id
+from models.paymenthistory import PaymentHistory
+from models.spec import TestTableSpecification, TestCaseSpecification
+from queries.policycenterqueries import PolicyCenterQueries
+
 
 # -------------------------------------------------------------------------------
 #  Suspense Payment Make Test Table
@@ -109,6 +112,7 @@ class SuspensePaymentMakeTestTable(TestTableSpecification):
         ]
         return row
 
+
 # -------------------------------------------------------------------------------
 #  Suspense Payment Apply Test Table
 # -------------------------------------------------------------------------------
@@ -187,8 +191,9 @@ class SuspensePaymentApplyTestTable(TestTableSpecification):
         ]
         return row
 
+
 # -------------------------------------------------------------------------------
-#  Suspense Payment Apply Test Table
+#  Suspense Payment Reverse Test Table
 # -------------------------------------------------------------------------------
 
 
@@ -215,7 +220,7 @@ class SuspensePaymentReverseTestTable(TestTableSpecification):
                         "Comment"]
         self.is_unique = [False, False, False, False]
         self.test_id_start = 10
-        self.test_id_prefix = "SUSPENSE-REVERS-"
+        self.test_id_prefix = "SUSPENSE-REVERSE-"
         # the percent of payments to be reversed
         self.apply_weight = 50
         return
@@ -241,7 +246,7 @@ class SuspensePaymentReverseTestTable(TestTableSpecification):
             if (not payment.applied) and self.random.select(self.apply_weight):
                 row = self.create_row(self.test_id_prefix, count, payment)
                 self.add_row(row)
-                payment_history[row[1]].applied = True
+                payment_history[row[1]].reversed = True
                 count += 1
         return
 
@@ -262,6 +267,7 @@ class SuspensePaymentReverseTestTable(TestTableSpecification):
             "Reverse suspense payment"
         ]
         return row
+
 
 # -------------------------------------------------------------------------------
 #  Invoice Check Test

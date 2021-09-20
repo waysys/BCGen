@@ -29,6 +29,9 @@ from testspecs.invoice_test_case import InvoiceCheckTest
 from testspecs.suspense_payment_test_case import SuspensePaymentMakeTest
 from testspecs.account_payment_test_case import AccountPaymentMakeTest
 from testspecs.policy_payment_test_case import PaymentMakeTest
+from testspecs.advanced_commission_test_case import AdvancedCommissionTest
+from testspecs.write_off_test_case import WriteOffMakeTest
+from testspecs.payment_plan_change_test_case import PaymentPlanChangeTest
 from files.filebuilder import FileBuilder
 
 # -------------------------------------------------------------------------------
@@ -118,6 +121,18 @@ def determine_spec(spec_name: str) -> TestCaseSpecification:
     elif spec_name == "PaymentMake":
         cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = PaymentMakeTest(cnx)
+        cnx.close()
+    elif spec_name == "AdvancedCommissionPayment":
+        cnx = Connector.create_connector(configuration.data_source, configuration.database)
+        spec = AdvancedCommissionTest(cnx)
+        cnx.close()
+    elif spec_name == "WriteOffMake":
+        cnx = Connector.create_connector(configuration.data_source, configuration.database)
+        spec = WriteOffMakeTest(cnx)
+        cnx.close()
+    elif spec_name == "PaymentPlanChange":
+        cnx = Connector.create_connector(configuration.data_source, configuration.database)
+        spec = PaymentPlanChangeTest(cnx)
         cnx.close()
     else:
         raise TestException("Unsupported test specification: " + spec_name)

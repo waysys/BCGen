@@ -92,6 +92,39 @@ WHERE  pp.retired = 0
 ORDER  BY pp.createtime DESC 
 """
 
+producer_code_query = """
+SELECT org.NAME         AS ProducerName,
+       code             AS ProducerCode,
+       prs.typecode     AS ProducerStatus,
+       adr.addressline1 AS AddressLine1,
+       adr.city         AS City,
+       st.typecode      AS State,
+       adr.postalcode   AS PostalCode
+FROM   pc_producercode prc
+       JOIN pc_organization org
+         ON prc.organizationid = org.id
+       JOIN pctl_producerstatus prs
+         ON prc.producerstatus = prs.id
+       JOIN pc_address adr
+         ON prc.addressid = adr.id
+       JOIN pctl_state st
+         ON adr.state = st.id
+WHERE  prc.retired = 0
+       AND prs.typecode = 'Active' 
+"""
+
+payment_plan_query = """
+DECLARE @CurrentID VARCHAR(20) = ?
+
+SELECT DISTINCT pps.billingid AS BillingID,
+                pps.NAME      AS PlanName
+FROM   pc_paymentplansummary pps
+       JOIN pctl_paymentmethod pt
+         ON pps.paymentplantype = pt.id
+WHERE  pt.typecode = 'Installments'
+       AND billingid <> @CurrentID 
+"""
+
 # -------------------------------------------------------------------------------
 #  PolicyCenter Queries
 # -------------------------------------------------------------------------------
@@ -151,4 +184,21 @@ class PolicyCenterQueries:
         assert selection_end is not None, "selection end must not be None"
         assert number_rows > 0, "The number of rows must be greater than 0, not " + str(number_rows)
         results = self.query.query(policy_periods_query, selection_end, number_rows)
+        return list(results)
+
+    def query_producer_code(self):
+        """
+        Return a list of policy codes with producers.
+        """
+        results = self.query.query(producer_code_query)
+        return list(results)
+
+    def query_payment_plan(self, current_id: str):
+        """
+        Return a list of installment payment plans, excluding the current plan.
+
+        Arguments:
+            current_id - the BillingID of the current payment plan
+        """
+        results = self.query.query(payment_plan_query, current_id)
         return list(results)
