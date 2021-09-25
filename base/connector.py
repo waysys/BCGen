@@ -13,17 +13,54 @@ __version__ = "01-Sep-2021"
 This module manages a connection to SQL Server
 """
 
-import pyodbc
+from enum import Enum
 from string import Template
+from base.testexception import TestException
+
+import pyodbc
 
 # -------------------------------------------------------------------------------
-# Connector class for SQL Server Authentication
+#  Access
+# -------------------------------------------------------------------------------
+
+
+class Access(Enum):
+    Windows = "Windows"
+    SqlServer = "SQL Server"
+
+
+# -------------------------------------------------------------------------------
+#  Database
+# -------------------------------------------------------------------------------
+
+
+class Database:
+
+    # ---------------------------------------------------------------------------
+    #  Constructor
+    # ---------------------------------------------------------------------------
+
+    def __init__(self):
+        """
+        Configure an instance of this class.
+        """
+        self.name = "database"
+        self.access: Access = Access.Windows
+        self.db_name: str = ""
+        self.server = ""
+        self.data_source = ""
+        self.user_name = ""
+        self.password = ""
+        return
+
+# -------------------------------------------------------------------------------
+# Base Connector class
 # -------------------------------------------------------------------------------
 
 
 class Connector:
     """
-    This class manages a connection to a SQL SERVER database.
+    This class is the parent class for connectors to SQL Server.
     """
 
     # ---------------------------------------------------------------------------
@@ -37,8 +74,6 @@ class Connector:
         self._driver = '{ODBC Driver 17 for SQL Server}'
         self._server = None
         self._database = None
-        self._username = None
-        self._password = None
         return
 
     # -------------------------------------------------------------------------------
@@ -85,6 +120,83 @@ class Connector:
         self._database = value
         return
 
+    # -------------------------------------------------------------------------------
+    # Operations
+    # -------------------------------------------------------------------------------
+
+    def build_connection_string(self):
+        """
+        Construct the connection string to use for connecting to the database.
+        This function must be implemented in the subclass.
+        """
+        raise NotImplementedError()
+
+    def connect(self) -> pyodbc.Connection:
+        """
+        Connect to a SQL Server database and return the connection.
+        """
+        connection_string = self.build_connection_string()
+        cnx = pyodbc.connect(connection_string)
+        return cnx
+
+    # -------------------------------------------------------------------------------
+    # Class Operations
+    # -------------------------------------------------------------------------------
+
+    @classmethod
+    def create_connector(cls, database_def: Database) -> pyodbc.Connection:
+        """
+        Create and return a connector to the database with the parameters from the environment.
+
+        Argument:
+            database_def - an instance of Database that defines the properties used to connect to the database.
+        """
+        assert database_def is not None, "Database definition must not be None"
+        assert database_def.db_name is not None, "Database name must not be None"
+        assert len(database_def.db_name) > 0, "Database name must not be empty"
+        if database_def.access == Access.Windows:
+            assert database_def.data_source is not None, "Database source must not be None"
+            assert len(database_def.data_source) > 0, "Datanase source must not be an empty string"
+            connector = ConnectorWindows()
+            connector.dsn = database_def.data_source
+            connector.database = database_def.db_name
+        elif database_def.access == Access.SqlServer:
+            assert database_def.server is not None, "Database servr must not be None"
+            assert len(database_def.server) > 0, "Datanase server must not be an empty string"
+            assert database_def.user_name is not None, "User name must not be None"
+            assert len(database_def.user_name) > 0, "User name must not be an empty string"
+            assert database_def.password is not None, "Password must not be None"
+            assert len(database_def.password) > 0, "Password must not be an empty string"
+            connector = ConnectorSqlServer()
+            connector.server = database_def.server
+            connector.database = database_def.db_name
+            connector.username = database_def.user_name
+            connector.password = database_def.password
+        else:
+            raise TestException("Unsupported database access: " + str(database_def.access))
+        cnx = connector.connect()
+        return cnx
+
+# -------------------------------------------------------------------------------
+# Connector class for SQL Server Authentication
+# -------------------------------------------------------------------------------
+
+
+class ConnectorSqlServer(Connector):
+
+    # ---------------------------------------------------------------------------
+    #  Constructor
+    # ---------------------------------------------------------------------------
+
+    def __init__(self):
+        """
+        Initialize an instance of the class
+        """
+        super().__init__()
+        self._username = None
+        self._password = None
+        return
+
     @property
     def username(self):
         """
@@ -124,18 +236,6 @@ class Connector:
         self._password = value
         return
 
-    # -------------------------------------------------------------------------------
-    # Operations
-    # -------------------------------------------------------------------------------
-
-    def connect(self) -> pyodbc.Connection:
-        """
-        Connect to a SQL Server database and return the connection.
-        """
-        connection_string = self.build_connection_string()
-        cnx = pyodbc.connect(connection_string)
-        return cnx
-
     def build_connection_string(self):
         """
         Return a connection string based on the properties in this class.
@@ -147,24 +247,6 @@ class Connector:
                                                 USERNAME=self.username,
                                                 PASSWORD=self.password)
         return connection_string
-
-    @staticmethod
-    def create_connector(server: str, database: str) -> pyodbc.Connection:
-        """
-        Create and return a connector to the database with the parameters from the environment.
-
-        Argument:
-            environ - the code for the environment
-        """
-        assert server is not None, "Server name must not be None"
-        assert len(server) > 0, "Server name must not be empty"
-        assert database is not None, "Database name must not be None"
-        assert len(database) > 0, "Database name must not be empty"
-        connector = ConnectorWindows()
-        connector.dsn = server
-        connector.database = database
-        cnx = connector.connect()
-        return cnx
 
 # -------------------------------------------------------------------------------
 # Connector class for SQL Server Authentication

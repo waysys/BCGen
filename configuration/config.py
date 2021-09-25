@@ -12,53 +12,9 @@ __version__ = "01-Sep-2021"
 This module contains class for configuration BC Gen programs.
 """
 
-import base.configuration
+from base.configuration import Configuration
+from configuration.gfit2020 import Project
 
-# -------------------------------------------------------------------------------
-#  Configuration
-# -------------------------------------------------------------------------------
-
-
-class Configuration(base.configuration.Configuration):
-    """
-    This class is the parent class of the other configuration classes for this
-    project.
-    """
-
-    # ---------------------------------------------------------------------------
-    #  Constructor
-    # ---------------------------------------------------------------------------
-
-    def __init__(self):
-        """
-        Initialize the instance of this class.
-        """
-        return
-
-    @property
-    def data_source(self) -> str:
-        """
-        Return the name of the ODBC data source.
-        """
-        return self.db_source[0]
-
-    @property
-    def database(self) -> str:
-        """
-        Return the name of the database.
-        """
-        return self.db_source[1]
-
-    def initialize_test_class(self):
-        """
-        Initialize the test class that does not use InfoCenter.
-        """
-        #
-        # Retrieve environmental variables for this test
-        #
-        print("____________________________________________________")
-        print("____________________________________________________")
-        return
 
 # -------------------------------------------------------------------------------
 #  Connector Test Configuration
@@ -78,8 +34,19 @@ class ConnectorTestConfiguration(Configuration):
         """
         Initialize the instance of this class.
         """
-        super().__init__()
+        project = Project()
+        super().__init__(project)
         return
+
+    # ---------------------------------------------------------------------------
+    #  Properties
+    # ---------------------------------------------------------------------------
+
+
+
+    # ---------------------------------------------------------------------------
+    #  Operations
+    # ---------------------------------------------------------------------------
 
     def initialize_test_class(self):
         """

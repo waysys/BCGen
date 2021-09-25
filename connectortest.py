@@ -18,7 +18,7 @@ from datetime import datetime
 import xmlrunner
 
 from base.connector import ConnectorWindows, Connector
-from configuration.configuration import ConnectorTestConfiguration
+from configuration.config import ConnectorTestConfiguration
 from queries.policycenterqueries import PolicyCenterQueries
 
 

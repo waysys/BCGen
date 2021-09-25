@@ -22,7 +22,7 @@ from pathlib import Path
 
 from base.connector import Connector
 from base.testexception import TestException
-from configuration.configuration import ConnectorTestConfiguration
+from configuration.config import ConnectorTestConfiguration
 from models.spec import TestCaseSpecification
 from testspecs.account_test_case import AccountCheckTest
 from testspecs.invoice_test_case import InvoiceCheckTest

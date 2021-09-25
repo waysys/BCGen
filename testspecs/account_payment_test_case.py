@@ -177,7 +177,7 @@ class AccountPaymentReverseTestTable(TestTableSpecification):
             prefix + str(count),
             payment.ref_number,
             "true",
-            "Reverse suspense payment"
+            "Reverse account payment"
         ]
         return row
 
