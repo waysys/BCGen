@@ -93,6 +93,7 @@ class TestCaseSpecification:
         Initialize an instance of this class.
         """
         self.project_name: str = ""
+        self.application_name = "BC"
         self.suite_name: str = ""
         self.suite_id: str = ""
         self.description: str = ""
@@ -141,5 +142,8 @@ class TestCaseSpecification:
             test_suite_directory - the path that points to a directory with
                subdirectories for projects.
         """
-        full_path = test_suite_directory + "/" + self.project_name + "/" + self.suite_name
+        full_path = test_suite_directory + "/"
+        full_path += self.application_name + "/"
+        full_path += self.project_name + "/"
+        full_path += self.suite_name
         return full_path

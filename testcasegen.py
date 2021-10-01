@@ -21,6 +21,7 @@ import traceback
 from pathlib import Path
 
 from base.connector import Connector
+from pyodbc import Connection
 from base.testexception import TestException
 from configuration.config import ConnectorTestConfiguration
 from models.spec import TestCaseSpecification
@@ -46,7 +47,7 @@ configuration = ConnectorTestConfiguration()
 # -------------------------------------------------------------------------------
 
 
-def main(spec_name: str, test_suite_directory: str):
+def main(spec_name: str):
     """
     This function is the main controller for test case generation.
 
@@ -58,6 +59,7 @@ def main(spec_name: str, test_suite_directory: str):
     prior = time.time()
     exit_code = 0
     try:
+        test_suite_directory = configuration.test_suite_directory
         generate(spec_name, test_suite_directory)
     except TestException as e:
         print("Error: " + str(e))
@@ -75,7 +77,7 @@ def main(spec_name: str, test_suite_directory: str):
         now = time.time()
         duration = math.ceil(now - prior)
         print("Ending test case generation - " + str(duration) + " seconds")
-    sys.exit(exit_code)
+    return exit_code
 
 
 def generate(spec_name: str, test_suite_directory: str):
@@ -91,49 +93,55 @@ def generate(spec_name: str, test_suite_directory: str):
     #
     assert spec_name is not None, "Specification name must not be None"
     assert len(spec_name) > 0, "Specificaiton name must not be an empty string"
-    spec = determine_spec(spec_name)
+    spec = obtain_spec(spec_name)
     output_directory = create_output_directory(spec, test_suite_directory)
     file_builder = FileBuilder(spec, output_directory, 1)
     file_builder.produce_test_case()
     return
 
+def obtain_spec(spec_name: str) -> TestCaseSpecification:
+    """
+    Return the test case specification associated with the specification name.
+    Initialize the database connection for the specification.
 
-def determine_spec(spec_name: str) -> TestCaseSpecification:
+    Arguments:
+        spec_name - the name of the specification
+    """
+    cnx = Connector.create_connector(configuration.data_source)
+    try:
+        spec = determine_spec(spec_name, cnx)
+    except Exception as e:
+        raise e
+    finally:
+        cnx.close()
+    return spec
+
+
+def determine_spec(spec_name: str, cnx: Connection) -> TestCaseSpecification:
     """
     Return the test case specification to be used to generate the test cases.
+
+    Arguments:
+        spec_name - the name of the specification
+        cnx - an ODBC connection to the database
     """
+
     if spec_name == "AccountCheckTest":
-        cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = AccountCheckTest(cnx)
-        cnx.close()
     elif spec_name == "InvoiceCheckTest":
-        cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = InvoiceCheckTest(cnx)
-        cnx.close()
     elif spec_name == "SuspensePaymentMake":
-        cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = SuspensePaymentMakeTest(cnx)
-        cnx.close()
     elif spec_name == "AccountPaymentMake":
-        cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = AccountPaymentMakeTest(cnx)
-        cnx.close()
     elif spec_name == "PaymentMake":
-        cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = PaymentMakeTest(cnx)
-        cnx.close()
     elif spec_name == "AdvancedCommissionPayment":
-        cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = AdvancedCommissionTest(cnx)
-        cnx.close()
     elif spec_name == "WriteOffMake":
-        cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = WriteOffMakeTest(cnx)
-        cnx.close()
     elif spec_name == "PaymentPlanChange":
-        cnx = Connector.create_connector(configuration.data_source, configuration.database)
         spec = PaymentPlanChangeTest(cnx)
-        cnx.close()
     else:
         raise TestException("Unsupported test specification: " + spec_name)
     return spec
@@ -174,11 +182,12 @@ if __name__ == '__main__':
     """
     Run the test generation program
     """
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 2:
         print("""
-              To execute SuiteDreams, use this command:
+              To execute testcasegen, use this command:
 
-              python main.py spec_name test_suite_directory
+              python main.py spec_name 
               """)
         sys.exit(1)
-    main(sys.argv[1], sys.argv[2])
+    exit_code = main(sys.argv[1])
+    sys.exit(exit_code)

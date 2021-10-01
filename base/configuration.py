@@ -140,6 +140,7 @@ class Configuration:
         """
         assert environ_variable is not None, "Environmental variable must not be None"
         env_name = os.getenv(environ_variable)
+        assert env_name is not None, "Environment variable is not set: " + environ_variable
         if not self.has_environment(env_name):
             print("Unknown environment: " + environ_variable)
             sys.exit(1)

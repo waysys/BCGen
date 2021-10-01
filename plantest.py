@@ -15,7 +15,8 @@ This module tests the GFIT2020 plan.
 import unittest
 
 import xmlrunner
-from configuration.gfit2020 import GFIT2020Project, ENVIRONMENT_NAME, BC_APPLICATION_NAME
+from configuration.gfit2020 import GFIT2020Project, ENVIRONMENT_NAME, \
+    BC_APPLICATION_NAME, CC_APPLICATION_NAME, PC_APPLICATION_NAME
 
 # -------------------------------------------------------------------------------
 #  Test Web Service
@@ -38,6 +39,7 @@ class TestGFIT2020Plan(unittest.TestCase):
         self.project = GFIT2020Project()
         self.env_name = ENVIRONMENT_NAME
         self.test_group_name = "BillingCenterProject"
+        self.ho_product_spec = "HomeownersSubmission"
         return
 
     def tearDown(self):
@@ -107,19 +109,45 @@ class TestGFIT2020Plan(unittest.TestCase):
         self.assertTrue(environment.is_output_base_dir_valid,
                         "Output base directory does not exist: " + environment.test_output_base_dir)
         #
-        # Check application
+        # Check BillingCenter application
         #
         self.assertTrue(environment.has_application(BC_APPLICATION_NAME),
                         "Application not found: " + BC_APPLICATION_NAME)
         application = environment.fetch_application(BC_APPLICATION_NAME)
         self.assertTrue(application is not None,
                         "Application not fetched: " + BC_APPLICATION_NAME)
+        self.assertTrue(application.is_database_valid, "Database check failed")
         #
-        # Check database definition
+        # Check ClaimCenter application
         #
+        self.assertTrue(environment.has_application(CC_APPLICATION_NAME),
+                        "Application not found: " + CC_APPLICATION_NAME)
+        application = environment.fetch_application(BC_APPLICATION_NAME)
+        self.assertTrue(application is not None,
+                        "Application not fetched: " + CC_APPLICATION_NAME)
         self.assertTrue(application.is_database_valid, "Database check failed")
         return
 
+    def test_product_spec_definition(self):
+        """
+        Test for the product specification.
+        """
+        self.assertTrue(self.project.has_application_type(BC_APPLICATION_NAME),
+                        "Application type not found: " + BC_APPLICATION_NAME)
+        self.assertTrue(self.project.has_application_type(PC_APPLICATION_NAME),
+                        "Application type not found: " + PC_APPLICATION_NAME)
+        self.assertTrue(self.project.has_application_type(CC_APPLICATION_NAME),
+                        "Application type not found: " + CC_APPLICATION_NAME)
+        applicaton_type = self.project.fetch_application_type(PC_APPLICATION_NAME)
+        self.assertTrue(applicaton_type.has_product_spec(self.ho_product_spec),
+                        "Product spec not found: " + self.ho_product_spec)
+        #
+        # Test specification file
+        #
+        product_spec = applicaton_type.fetch_product_spec(self.ho_product_spec)
+        self.assertTrue(product_spec.is_product_spec_file_valid,
+                        "Invalid product spec file: " + product_spec.product_spec_file)
+        return
 
 # -------------------------------------------------------------------------------
 #  Main Program
