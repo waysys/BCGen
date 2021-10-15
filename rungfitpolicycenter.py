@@ -51,6 +51,8 @@ class PolicyCenterHomeownersSubmission(GfitWebServiceRunner):
         assert product_spec.is_product_spec_file_valid, \
             "Product spec file not found: " + product_spec.product_spec_file
         self.product_spec_file = product_spec.product_spec_file
+        test_group = self.project.fetch_test_group("PolicyCenterHomeownersProject")
+        self.test_group_directory = test_group.test_group_base_dir
         return
 
 

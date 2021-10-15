@@ -69,7 +69,7 @@ class TestWebService(unittest.TestCase):
         result = GfitClient.is_valid_wsdl(self.url)
         self.assertTrue(result, "validation failed to return True")
         result = GfitClient.is_valid_wsdl("http://bozo.com/ws?wsdl")
-        self.assertTrue(not result, "Validation failed to return Fals")
+        self.assertTrue(not result, "Validation failed to return False")
         return
 
 

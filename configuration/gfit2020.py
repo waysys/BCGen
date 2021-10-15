@@ -197,15 +197,28 @@ class GFIT2020Project(Project):
         """
         Define the BillingCenterProject test group.
         """
+        application_type = self.fetch_application_type(BC_APPLICATION_NAME)
+        #
+        # BillingCenter Project
+        #
         test_group = self.create_test_group("BillingCenterProject")
         test_group.test_group_description = """
          This test group contains test suites that check GFIT fixtures for BillingCenter.
          """
-        application_type = self.fetch_application_type(BC_APPLICATION_NAME)
         test_group.application_type = application_type
         test_group.create_test_suite("InvoiceCheck")
         test_group.create_test_suite("MakePayments")
         test_group.create_test_suite("SuspensePaymentMake")
+        test_group.create_test_suite("CollateralRequirementCreate")
+        #
+        # BillingCenter Common Project
+        #
+        test_group = self.create_test_group("BillingCenterCommonProject")
+        test_group.test_group_description = """
+        This test group contains tests suites that exercise the common fixtures for BillingCenter.
+        """
+        test_group.application_type = application_type
+        test_group.create_test_suite("CommonCreate")
         return
 
     def define_pc_test_group(self):

@@ -6,7 +6,7 @@
 # -------------------------------------------------------------------------------
 #
 __author__ = 'Bill Shaffer'
-__version__ = "06-Sep-2021"
+__version__ = "10-Oct-2021"
 
 """
 This module contains the main program for generating GFIT test cases.  The test
@@ -20,20 +20,22 @@ import time
 import traceback
 from pathlib import Path
 
-from base.connector import Connector
 from pyodbc import Connection
+
+from base.connector import Connector
 from base.testexception import TestException
 from configuration.config import ConnectorTestConfiguration
-from models.spec import TestCaseSpecification
-from testspecs.account_test_case import AccountCheckTest
-from testspecs.invoice_test_case import InvoiceCheckTest
-from testspecs.suspense_payment_test_case import SuspensePaymentMakeTest
-from testspecs.account_payment_test_case import AccountPaymentMakeTest
-from testspecs.policy_payment_test_case import PaymentMakeTest
-from testspecs.advanced_commission_test_case import AdvancedCommissionTest
-from testspecs.write_off_test_case import WriteOffMakeTest
-from testspecs.payment_plan_change_test_case import PaymentPlanChangeTest
 from files.filebuilder import FileBuilder
+from models.spec import TestCaseSpecification
+from testspecs.account_payment_test_case import AccountPaymentMakeTest
+from testspecs.account_test_case import AccountCheckTest
+from testspecs.advanced_commission_test_case import AdvancedCommissionTest
+from testspecs.collateral_requirement_test_case import CollateralRequirementTest
+from testspecs.invoice_test_case import InvoiceCheckTest
+from testspecs.payment_plan_change_test_case import PaymentPlanChangeTest
+from testspecs.policy_payment_test_case import PaymentMakeTest
+from testspecs.suspense_payment_test_case import SuspensePaymentMakeTest
+from testspecs.write_off_test_case import WriteOffMakeTest
 
 # -------------------------------------------------------------------------------
 #  Global Variables
@@ -57,7 +59,7 @@ def main(spec_name: str):
     """
     print("Starting test suite generation for: " + spec_name)
     prior = time.time()
-    exit_code = 0
+    ext_code = 0
     try:
         test_suite_directory = configuration.test_suite_directory
         generate(spec_name, test_suite_directory)
@@ -66,18 +68,18 @@ def main(spec_name: str):
         info = sys.exc_info()
         tb = info[2]
         traceback.print_tb(tb)
-        exit_code = 1
+        ext_code = 1
     except Exception as e:
         print("Exception: " + str(e))
         info = sys.exc_info()
         tb = info[2]
         traceback.print_tb(tb)
-        exit_code = 1
+        ext_code = 1
     finally:
         now = time.time()
         duration = math.ceil(now - prior)
         print("Ending test case generation - " + str(duration) + " seconds")
-    return exit_code
+    return ext_code
 
 
 def generate(spec_name: str, test_suite_directory: str):
@@ -92,12 +94,13 @@ def generate(spec_name: str, test_suite_directory: str):
     # Determine the specification to use
     #
     assert spec_name is not None, "Specification name must not be None"
-    assert len(spec_name) > 0, "Specificaiton name must not be an empty string"
+    assert len(spec_name) > 0, "Specification name must not be an empty string"
     spec = obtain_spec(spec_name)
     output_directory = create_output_directory(spec, test_suite_directory)
     file_builder = FileBuilder(spec, output_directory, 1)
     file_builder.produce_test_case()
     return
+
 
 def obtain_spec(spec_name: str) -> TestCaseSpecification:
     """
@@ -142,6 +145,8 @@ def determine_spec(spec_name: str, cnx: Connection) -> TestCaseSpecification:
         spec = WriteOffMakeTest(cnx)
     elif spec_name == "PaymentPlanChange":
         spec = PaymentPlanChangeTest(cnx)
+    elif spec_name == "CollateralRequirementTest":
+        spec = CollateralRequirementTest(cnx)
     else:
         raise TestException("Unsupported test specification: " + spec_name)
     return spec
@@ -172,6 +177,7 @@ def validate_directory(direct: str):
     if not path.is_dir():
         raise TestException("Path is not a directory: " + direct)
     return
+
 
 # ---------------------------------------------------------------------------
 #  Main
